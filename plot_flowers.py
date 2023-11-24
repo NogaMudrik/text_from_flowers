@@ -273,7 +273,7 @@ def create_text_to_image(string = 'BRING THEM HOME!', yex = 0.1,  format_text = 
     
     remove_edges(ax)
     string_valid = string.replace('$', '').replace(os.sep, '')
-    plt.savefig('%s.%s'%(string_valid, , format_text) , bbox_inches="tight")
+    plt.savefig('%s.%s'%(string_valid,  format_text) , bbox_inches="tight")
     
 
 
@@ -290,9 +290,9 @@ def load_and_convert_to_bw(file_path):
     return image_array
     
     
-def find_text_locs(string, , format_text = '.png'):
+def find_text_locs(string, format_text = '.png'):
     string_valid = string.replace('$', '').replace(os.sep, '')
-    if not os.path.exists('%s.%s'%(string_valid,  format_text):
+    if not os.path.exists('%s.%s'%(string_valid,  format_text)):
         create_text_to_image(string)
         time.sleep(5)  # Pause for 5 seconds
     img_array = load_and_convert_to_bw('%s.%s'%(string_valid, format_text))
@@ -309,7 +309,7 @@ def flowers_by_text(string ='BRING THEM HOME', num_flowers = 1030, F_max = 60, F
     centers_min = -3, centers_max = 3, to_save = True, fac = 0.1, w_back = False, format_text = '.png'):
     max_flowers = num_flowers
 
-    text_rows, text_cols = find_text_locs(string, , format_text)
+    text_rows, text_cols = find_text_locs(string,  format_text)
     text_rows = - text_rows
     if len(text_rows) > max_flowers:
         num_cur = len(text_rows)
