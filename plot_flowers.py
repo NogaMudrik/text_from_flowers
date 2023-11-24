@@ -265,14 +265,16 @@ def create_flowers(num_flowers = 170, F_max = 500, F_min = 60,
     
     
     
-def create_text_to_image(string = 'BRING THEM HOME!', yex = 0.1,  format_text = '.png'):    
+def create_text_to_image(string = 'BRING THEM HOME!', yex = 0.1,  format_text = '.png', string_save = '', fontweight= 'bold'):
+    if len(string_save) == 0:
+        string_save = string    
     fig, ax = plt.subplots(figsize = (len(string),1))
-    ax.text(0, 0, string, fontsize = 50, fontweight = 'bold')
+    ax.text(0, 0, string, fontsize = 50, fontweight = fontweight)
     ax.set_ylim([- yex, yex])
     fig.tight_layout()
     
     remove_edges(ax)
-    string_valid = string.replace('$', '').replace(os.sep, '')
+    string_valid = string_save.replace('$', '').replace(os.sep, '')
     plt.savefig('%s.%s'%(string_valid,  format_text) , bbox_inches="tight")
     
 
@@ -290,10 +292,13 @@ def load_and_convert_to_bw(file_path):
     return image_array
     
     
-def find_text_locs(string, format_text = '.png'):
-    string_valid = string.replace('$', '').replace(os.sep, '')
+def find_text_locs(string, format_text = '.png', string_save = '', fontweight= 'bold'):
+    if len(string_save) == 0:
+        string_save = string
+        
+    string_valid = string_save.replace('$', '').replace(os.sep, '')
     if not os.path.exists('%s.%s'%(string_valid,  format_text)):
-        create_text_to_image(string)
+        create_text_to_image(string, string_save = string_save, format_text  = format_text , fontweight=  fontweight)
         time.sleep(5)  # Pause for 5 seconds
     img_array = load_and_convert_to_bw('%s.%s'%(string_valid, format_text))
     is_text = img_array < 250
@@ -306,17 +311,20 @@ def find_text_locs(string, format_text = '.png'):
     
 def flowers_by_text(string ='BRING THEM HOME', num_flowers = 1030, F_max = 60, F_min = 20,
     w_min = 0.002, w_max = 0.02, l_max = 0.4, l_min = 0.2, 
-    centers_min = -3, centers_max = 3, to_save = True, fac = 0.1, w_back = False, format_text = '.png'):
+    centers_min = -3, centers_max = 3, to_save = True, fac = 0.1, w_back = False,
+    format_text = '.png', string_save = '', fontweight= 'bold'):
+    
+    if len(string_save) == 0:
+        string_save = string
+        
     max_flowers = num_flowers
-
-    text_rows, text_cols = find_text_locs(string,  format_text)
+    text_rows, text_cols = find_text_locs(string,  format_text, string_save, fontweight = fontweight)
     text_rows = - text_rows
     if len(text_rows) > max_flowers:
         num_cur = len(text_rows)
         num_new = np.random.choice( np.arange( num_cur),  max_flowers  ) #np.linspace(0, num_cur - 1, max_flowers ).astype(int)
 
         text_rows_new = text_rows[num_new]
-
         text_cols_new = text_cols[num_new]
     else:
         num_flowers = len(text_rows) 
@@ -327,7 +335,7 @@ def flowers_by_text(string ='BRING THEM HOME', num_flowers = 1030, F_max = 60, F
     if w_back:
         ax.scatter(text_cols*fac ,text_rows*fac, alpha = 0.2, color = 'green')
     
-    string_valid = string.replace('$', '').replace(os.sep, '')
+    string_valid = string_save.replace('$', '').replace(os.sep, '')
     create_flowers(num_flowers, F_max, F_min ,
         w_min, w_max, l_max, l_min, 
         centers_min, centers_max, to_save, centers = np.vstack([text_cols_new ,text_rows_new ]).T*fac, fig = fig, ax = ax, name_save = string_valid + str(w_back))
