@@ -266,7 +266,7 @@ def create_flowers(num_flowers = 170, F_max = 500, F_min = 60,
     
     
 def create_text_to_image(string = 'BRING THEM HOME!'):    
-    fig, ax = plt.subplots(figsize = (15,1))
+    fig, ax = plt.subplots(figsize = (len(string),1))
     ax.text(0, 0, string, fontsize = 50)
     ax.set_ylim([-0.1,0.1])
     fig.tight_layout()
@@ -314,9 +314,7 @@ def flowers_by_text(string ='BRING THEM HOME', num_flowers = 1030, F_max = 60, F
         num_new = np.random.choice( np.arange( num_cur),  max_flowers  ) #np.linspace(0, num_cur - 1, max_flowers ).astype(int)
 
         text_rows_new = text_rows[num_new]
-        #print(text_rows_new )
-        #print(5454)
-        #input('fjkfld?')
+
         text_cols_new = text_cols[num_new]
     else:
         num_flowers = len(text_rows) 
