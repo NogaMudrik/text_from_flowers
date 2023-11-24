@@ -6,6 +6,10 @@ Created on Wed Nov 22 19:13:50 2023
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import time    
+from PIL import Image    
+import os 
+
 
 def checkEmptyList(obj):
     """
@@ -46,8 +50,31 @@ def create_colors(len_colors, perm = [0,1,2], style = 'random', cmap  = 'viridis
 
 def to_create_plot_of_cs(c, mat, colors = [], cmap  = 'viridis', epsilon = 1e-9, fig = [], ax = [], wind = 3, len_curve = 0.01,
                          plot_curves = False, closed_loop = True, seed = 0):
-
-        
+    """
+    Create a plot of curves in 2D using control points and coefficients.
+    
+    Parameters:
+    - c (numpy.ndarray): Coefficients representing the control points of the curves.
+    - mat (numpy.ndarray): Matrix representing the control points of the curves.
+    - colors (list, optional): List of colors for the curves. If not provided, random colors will be generated.
+    - cmap (str, optional): Colormap for generating random colors. Default is 'viridis'.
+    - epsilon (float, optional): A small value used for numerical stability. Default is 1e-9.
+    - fig (matplotlib.figure.Figure, optional): Matplotlib figure for plotting. If not provided, a new figure is created.
+    - ax (matplotlib.axes.Axes, optional): Matplotlib axes for plotting. If not provided, new axes are created.
+    - wind (int, optional): Window size for the control points. Default is 3.
+    - len_curve (float, optional): Length of the curve segments. Default is 0.01.
+    - plot_curves (bool, optional): Whether to plot the curves as lines. Default is False.
+    - closed_loop (bool, optional): Whether to close the curve loops. Default is True.
+    - seed (int, optional): Seed for random color generation. Default is 0.
+    
+    Raises:
+    - ValueError: If the size of c and mat do not match or if the dimensions of mat are not supported.
+    
+    Returns:
+    - matplotlib.figure.Figure: The matplotlib figure containing the plot.
+    - matplotlib.axes.Axes: The matplotlib axes containing the plot.
+    """
+            
     if checkEmptyList(colors):
         colors = create_colors(c.shape[0], style = 'random', cmap = cmap, seed = seed)
         colors = [colors[:,i] for i in range(colors.shape[1])]
@@ -92,24 +119,7 @@ def to_create_plot_of_cs(c, mat, colors = [], cmap  = 'viridis', epsilon = 1e-9,
             endings = np.vstack([x,y])+ m_inv*np.repeat(c[dim_c].reshape((1,-1)), 2, axis = 0)
 
 
-            starts = np.vstack([x,y])#[:,:-1]
-            
-            #ax.fill(np.hstack([starts[0], endings[0] ]), np.hstack([  starts[1] , endings[1] ]) , alpha = 0.5, color = colors[dim_c]) 
-            # ax.scatter(np.hstack([starts[0], endings[0] ]), np.hstack([  starts[1] , endings[1] ]), c = colors[dim_c] , alpha = 0.5, s = 10) 
-            
-            
-            # ###########################################
-            # # CENTER
-            # ###########################################
-            # xs =  endings[0] #np.hstack([starts[0], endings[0] ])
-            # mean_x = np.mean(xs)
-            # ys = endings[1] #np.hstack([starts[1], endings[1] ])
-            # mean_y =  np.mean(ys)
-            # fig2, ax2 = plt.subplots()
-            # mean_x_y = (xs - mean_x)**2 + (ys -mean_y)**2
-            # ax2.hist(mean_x_y)
-            
-            
+            starts = np.vstack([x,y])         
             
             if plot_curves:            
                 [ax.plot([starts[0][i], endings[0][i]],[starts[1][i], endings[1][i]], 
@@ -159,130 +169,35 @@ def remove_edges(ax, include_ticks = False, top = False, right = False, bottom =
         ax.get_yaxis().set_ticks([])            
         
         
-        
-        
-
-def gaussian_vals(mat, std = 1, mean = 0 , norm = False, dimensions = 1, mat2 = [], power = 2):
-    """
-    check_again
-    Parameters
-    ----------
-    mat : the matrix to consider
-    std : number, gaussian std
-    mean : number, optionalis 
-        mean gaussian value. The default is 0.
-    norm : boolean, optional
-        whether to divide values by sum (s.t. sum -> 1). The default is False.
-
-    Returns
-    -------
-    g : gaussian values of mat
-
-    """    
-    if dimensions == 1:
-        if not checkEmptyList(mat2): 
-            warnings.warn('Pay attention that the calculated Gaussian is 1D. Please change the input "dimensions" in "gaussian_vals" to 2 if you want to consider the 2nd mat as well')
       
-
-        g = np.exp(-((mat-mean)/std)**power)
-        if norm: return g/np.sum(g)
-
-    elif dimensions == 2:
-        #dim1_mat = np.abs(mat1.reshape((-1,1)) @ np.ones((1,len(mat1.flatten()))))
-        #dim2_mat = np.abs((mat2.reshape((-1,1)) @ np.ones((1,len(mat2.flatten())))).T)
-        #g= np.exp(-0.5 * (1/std)* (dim1_mat**power + (dim1_mat.T)**power))
-        g = gaussian_vals(mat, std , mean , norm , dimensions = 1, mat2 = [], power = power)
-        g1= g.reshape((1,-1))
-        g2 = np.exp(-0.5/np.max([int(len((mat2-1)/2)),1])) * mat2.reshape((-1,1))
-        g = g2 @ g1 
-        
-        g[int(g.shape[0]/2), int(g.shape[1]/2)] = 0
-        if norm:
-            g = g/np.sum(g)
-        
-    else:
-        raise ValueError('Invalid "dimensions" input')
-    return g
-        
-def cut_gauss(gaussian, t, wind, left, right):
-    """
-    Cuts a Gaussian array to fit within specified left and right boundaries.
-    
-    Parameters:
-        gaussian (numpy.ndarray): The 1D Gaussian array to be cut.
-        t (int): The center index around which the Gaussian array is considered.
-        wind (int): The half-size of the window around the center index 't'.
-        left (int): The left boundary index of the desired region.
-        right (int): The right boundary index of the desired region.
-    
-    Returns:
-        numpy.ndarray: The trimmed Gaussian array that fits within the specified boundaries.
-    """
-    if t + wind > right:
-        diff = t + wind - right
-        return gaussian[:-diff]
-    elif t - wind < left:
-        diff = left - (t - wind)
-        return gaussian[diff:]
-    else:
-        return gaussian
-
-def gaussian_convolve(mat, wind = 10, direction = 1, sigma = 1):
-    """
-    Convolve a 2D matrix with a Gaussian kernel along the specified direction.
-    
-    Parameters:
-        mat (numpy.ndarray): The 2D input matrix to be convolved with the Gaussian kernel.
-        wind (int, optional): The half-size of the Gaussian kernel window. Default is 10.
-        direction (int, optional): The direction of convolution. 
-            1 for horizontal (along columns), 0 for vertical (along rows). Default is 1.
-        sigma (float, optional): The standard deviation of the Gaussian kernel. Default is 1.
-    
-    Returns:
-        numpy.ndarray: The convolved 2D matrix with the same shape as the input 'mat'.
-        
-    Raises:
-        ValueError: If 'direction' is not 0 or 1.
-    """
-    if direction == 1:
-        gaussian = gaussian_array(2*wind,sigma)
-        mat_shape = mat.shape[1]
-        return np.vstack([ [np.sum(mat[row, np.max([t - wind,0]): np.min([t + wind, mat_shape])]*cut_gauss(gaussian, t, wind, left = 0, right = mat_shape)) 
-                     for t in range(mat.shape[1])] 
-                   for row in range(mat.shape[0])])
-    elif direction == 0:
-        return gaussian_convolve(mat.T, wind, direction = 1, sigma = sigma).T
-    else:
-        raise ValueError('invalid direction')
-    
-    
-    
-    
-def gaussian_array(length,sigma = 1  ):
-    """
-    Generate an array of Gaussian values with a given length and standard deviation.
-    
-    Args:
-        length (int): The length of the array.
-        sigma (float, optional): The standard deviation of the Gaussian distribution. Default is 1.
-    
-    Returns:
-        ndarray: The array of Gaussian values.
-    """
-    x = np.linspace(-3, 3, length)  # Adjust the range if needed
-    gaussian = np.exp(-(x ** 2) / (2 * sigma ** 2))
-    normalized_gaussian = gaussian / np.max(gaussian)
-    return normalized_gaussian
-    
 
 
 def create_flower( stem_color = 'green', fig = [], ax = [],                 
-    F = 509,
-    w = 0.002,
-    l = 0.4, center = (0,0), seed = 0, cos_max_c = 10, cos_max_c2 = 5, w_c_2 = 5, w_c = 8, fill_inside = True):
+    F = 509,     w = 0.002,    l = 0.4, center = (0,0), seed = 0, cos_max_c = 10, cos_max_c2 = 5, w_c_2 = 5, w_c = 8, fill_inside = True):
     
+    """
+    Create a flower-like plot with a stem and petals using control points and coefficients.
     
+    Parameters:
+    - stem_color (str, optional): Color of the stem. Default is 'green'.
+    - fig (matplotlib.figure.Figure, optional): Matplotlib figure for plotting. If not provided, a new figure is created.
+    - ax (matplotlib.axes.Axes, optional): Matplotlib axes for plotting. If not provided, new axes are created.
+    - F (int, optional): Number of points for creating the flower petals. Default is 509.
+    - w (float, optional): Width of the petals. Default is 0.002.
+    - l (float, optional): Length of the petals. Default is 0.4.
+    - center (tuple, optional): Center coordinates of the flower. Default is (0, 0).
+    - seed (int, optional): Seed for random color generation. Default is 0.
+    - cos_max_c (int, optional): Maximum value for the cosine function for the first set of coefficients. Default is 10.
+    - cos_max_c2 (int, optional): Maximum value for the cosine function for the second set of coefficients. Default is 5.
+    - w_c_2 (float, optional): Width factor for the second set of coefficients. Default is 5.
+    - w_c (float, optional): Width factor for the first set of coefficients. Default is 8.
+    - fill_inside (bool, optional): Whether to fill the inside of the flower. Default is True.
     
+    Returns:
+    - matplotlib.figure.Figure: The matplotlib figure containing the flower plot.
+    - matplotlib.axes.Axes: The matplotlib axes containing the flower plot.
+    """
+        
     
     x_green = [-w + center[0], w+ center[0], w+ center[0], -w+ center[0]]
     rad = 0.05
@@ -359,9 +274,7 @@ def create_text_to_image(string = 'BRING THEM HOME!'):
     remove_edges(ax)
     plt.savefig('%s.png'%string, bbox_inches="tight")
     
-import time    
-from PIL import Image    
-import os 
+
 
 def load_and_convert_to_bw(file_path):
     # Open the image file
@@ -391,7 +304,7 @@ def find_text_locs(string):
     
 def flowers_by_text(string ='BRING THEM HOME', num_flowers = 1030, F_max = 60, F_min = 20,
     w_min = 0.002, w_max = 0.02, l_max = 0.4, l_min = 0.2, 
-    centers_min = -3, centers_max = 3, to_save = True, fac = 0.1):
+    centers_min = -3, centers_max = 3, to_save = True, fac = 0.1, w_back = False):
     max_flowers = num_flowers
 
     text_rows, text_cols = find_text_locs(string)
@@ -411,12 +324,13 @@ def flowers_by_text(string ='BRING THEM HOME', num_flowers = 1030, F_max = 60, F
 
     
     fig, ax = plt.subplots(figsize = (22,5))    
-    ax.scatter(text_cols*fac ,text_rows*fac, alpha = 0.2, color = 'green')
+    if w_back:
+        ax.scatter(text_cols*fac ,text_rows*fac, alpha = 0.2, color = 'green')
     
     
     create_flowers(num_flowers, F_max, F_min ,
         w_min, w_max, l_max, l_min, 
-        centers_min, centers_max, to_save, centers = np.vstack([text_cols_new ,text_rows_new ]).T*fac, fig = fig, ax = ax, name_save = string)
+        centers_min, centers_max, to_save, centers = np.vstack([text_cols_new ,text_rows_new ]).T*fac, fig = fig, ax = ax, name_save = string + str(w_back))
 
 
 
